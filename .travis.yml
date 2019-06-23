@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t spectradock/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run spectradock/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t spectradock/multi-client ./client
+  - docker build -t spectradock/multi-nginx ./nginx
+  - docker build -t spectradock/multi-server ./server
+  - docker build -t spectradock/multi-worker ./worker
+  # Log in to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push spectradock/multi-client
+  - docker push spectradock/multi-nginx
+  - docker push spectradock/multi-server
+  - docker push spectradock/multi-worker
+
